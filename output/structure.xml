@@ -1,0 +1,2426 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project version="2.0.0a11" title="">
+  <file path="lessc.inc.php" hash="67fb4d7a78dd40d2bbcaf0fa18151d25" package="Default">
+    <docblock line="3">
+      <description>lessphp v0.3.8
+http://leafo.net/lessphp</description>
+      <long-description>&lt;p&gt;LESS css compiler, adapted from http://lesscss.org&lt;/p&gt;
+
+&lt;p&gt;Copyright 2012, Leaf Corcoran &lt;a href="mai&amp;#108;&amp;#116;&amp;#111;&amp;#58;&amp;#108;&amp;#101;&amp;#97;&amp;#102;&amp;#111;&amp;#116;&amp;#64;&amp;#103;&amp;#109;&amp;#97;&amp;#105;&amp;#x6c;&amp;#x2e;&amp;#x63;&amp;#x6f;&amp;#x6d;"&gt;&amp;#108;&amp;#101;&amp;#97;&amp;#102;&amp;#111;&amp;#116;&amp;#64;&amp;#103;&amp;#109;&amp;#97;&amp;#105;&amp;#x6c;&amp;#x2e;&amp;#x63;&amp;#x6f;&amp;#x6d;&lt;/a&gt;
+Licensed under MIT or GPLv3, see LICENSE&lt;/p&gt;</long-description>
+    </docblock>
+    <class final="false" abstract="false" namespace="global" line="40" package="Default">
+      <extends/>
+      <name>lessc</name>
+      <full_name>\lessc</full_name>
+      <docblock line="14">
+        <description>The less compiler and parser.</description>
+        <long-description>&lt;p&gt;Converting LESS to CSS is a three stage process. The incoming file is parsed
+by &lt;code&gt;lessc_parser&lt;/code&gt; into a syntax tree, then it is compiled into another tree
+representing the CSS structure by &lt;code&gt;lessc&lt;/code&gt;. The CSS tree is fed into a
+formatter, like &lt;code&gt;lessc_formatter&lt;/code&gt; which then outputs CSS as a string.&lt;/p&gt;
+
+&lt;p&gt;During the first compile, all values are &lt;em&gt;reduced&lt;/em&gt;, which means that their
+types are brought to the lowest form before being dump as strings. This
+handles math equations, variable dereferences, and the like.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;parse&lt;/code&gt; function of &lt;code&gt;lessc&lt;/code&gt; is the entry point.&lt;/p&gt;
+
+&lt;p&gt;In summary:&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;lessc&lt;/code&gt; class creates an intstance of the parser, feeds it LESS code,
+then transforms the resulting tree to a CSS tree. This class also holds the
+evaluation context, such as all available mixins and variables at any given
+time.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;lessc_parser&lt;/code&gt; class is only concerned with parsing its input.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;lessc_formatter&lt;/code&gt; takes a CSS tree, and dumps it to a formatted string,
+handling things like indentation.&lt;/p&gt;</long-description>
+      </docblock>
+      <property final="false" static="true" visibility="public" line="41" namespace="global" package="Default">
+        <name>$VERSION</name>
+        <default>"v0.3.8"</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="42" namespace="global" package="Default">
+        <name>$TRUE</name>
+        <default>array("keyword", "true")</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="43" namespace="global" package="Default">
+        <name>$FALSE</name>
+        <default>array("keyword", "false")</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="45" namespace="global" package="Default">
+        <name>$libFunctions</name>
+        <default>array()</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="46" namespace="global" package="Default">
+        <name>$registeredVars</name>
+        <default>array()</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="47" namespace="global" package="Default">
+        <name>$preserveComments</name>
+        <default>false</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="49" namespace="global" package="Default">
+        <name>$vPrefix</name>
+        <default>'@'</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="50" namespace="global" package="Default">
+        <name>$mPrefix</name>
+        <default>'$'</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="51" namespace="global" package="Default">
+        <name>$parentSelector</name>
+        <default>'&amp;'</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="53" namespace="global" package="Default">
+        <name>$importDisabled</name>
+        <default>false</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="54" namespace="global" package="Default">
+        <name>$importDir</name>
+        <default>''</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="56" namespace="global" package="Default">
+        <name>$numberPrecision</name>
+        <default>null</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="60" namespace="global" package="Default">
+        <name>$sourceParser</name>
+        <default>null</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="61" namespace="global" package="Default">
+        <name>$sourceLoc</name>
+        <default>null</default>
+      </property>
+      <property final="false" static="true" visibility="public" line="63" namespace="global" package="Default">
+        <name>$defaultValue</name>
+        <default>array("keyword", "")</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="65" namespace="global" package="Default">
+        <name>$nextImportId</name>
+        <default>0</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="1862" namespace="global" package="Default">
+        <name>$cssColors</name>
+        <default>array('aliceblue' =&gt; '240,248,255', 'antiquewhite' =&gt; '250,235,215', 'aqua' =&gt; '0,255,255', 'aquamarine' =&gt; '127,255,212', 'azure' =&gt; '240,255,255', 'beige' =&gt; '245,245,220', 'bisque' =&gt; '255,228,196', 'black' =&gt; '0,0,0', 'blanchedalmond' =&gt; '255,235,205', 'blue' =&gt; '0,0,255', 'blueviolet' =&gt; '138,43,226', 'brown' =&gt; '165,42,42', 'burlywood' =&gt; '222,184,135', 'cadetblue' =&gt; '95,158,160', 'chartreuse' =&gt; '127,255,0', 'chocolate' =&gt; '210,105,30', 'coral' =&gt; '255,127,80', 'cornflowerblue' =&gt; '100,149,237', 'cornsilk' =&gt; '255,248,220', 'crimson' =&gt; '220,20,60', 'cyan' =&gt; '0,255,255', 'darkblue' =&gt; '0,0,139', 'darkcyan' =&gt; '0,139,139', 'darkgoldenrod' =&gt; '184,134,11', 'darkgray' =&gt; '169,169,169', 'darkgreen' =&gt; '0,100,0', 'darkgrey' =&gt; '169,169,169', 'darkkhaki' =&gt; '189,183,107', 'darkmagenta' =&gt; '139,0,139', 'darkolivegreen' =&gt; '85,107,47', 'darkorange' =&gt; '255,140,0', 'darkorchid' =&gt; '153,50,204', 'darkred' =&gt; '139,0,0', 'darksalmon' =&gt; '233,150,122', 'darkseagreen' =&gt; '143,188,143', 'darkslateblue' =&gt; '72,61,139', 'darkslategray' =&gt; '47,79,79', 'darkslategrey' =&gt; '47,79,79', 'darkturquoise' =&gt; '0,206,209', 'darkviolet' =&gt; '148,0,211', 'deeppink' =&gt; '255,20,147', 'deepskyblue' =&gt; '0,191,255', 'dimgray' =&gt; '105,105,105', 'dimgrey' =&gt; '105,105,105', 'dodgerblue' =&gt; '30,144,255', 'firebrick' =&gt; '178,34,34', 'floralwhite' =&gt; '255,250,240', 'forestgreen' =&gt; '34,139,34', 'fuchsia' =&gt; '255,0,255', 'gainsboro' =&gt; '220,220,220', 'ghostwhite' =&gt; '248,248,255', 'gold' =&gt; '255,215,0', 'goldenrod' =&gt; '218,165,32', 'gray' =&gt; '128,128,128', 'green' =&gt; '0,128,0', 'greenyellow' =&gt; '173,255,47', 'grey' =&gt; '128,128,128', 'honeydew' =&gt; '240,255,240', 'hotpink' =&gt; '255,105,180', 'indianred' =&gt; '205,92,92', 'indigo' =&gt; '75,0,130', 'ivory' =&gt; '255,255,240', 'khaki' =&gt; '240,230,140', 'lavender' =&gt; '230,230,250', 'lavenderblush' =&gt; '255,240,245', 'lawngreen' =&gt; '124,252,0', 'lemonchiffon' =&gt; '255,250,205', 'lightblue' =&gt; '173,216,230', 'lightcoral' =&gt; '240,128,128', 'lightcyan' =&gt; '224,255,255', 'lightgoldenrodyellow' =&gt; '250,250,210', 'lightgray' =&gt; '211,211,211', 'lightgreen' =&gt; '144,238,144', 'lightgrey' =&gt; '211,211,211', 'lightpink' =&gt; '255,182,193', 'lightsalmon' =&gt; '255,160,122', 'lightseagreen' =&gt; '32,178,170', 'lightskyblue' =&gt; '135,206,250', 'lightslategray' =&gt; '119,136,153', 'lightslategrey' =&gt; '119,136,153', 'lightsteelblue' =&gt; '176,196,222', 'lightyellow' =&gt; '255,255,224', 'lime' =&gt; '0,255,0', 'limegreen' =&gt; '50,205,50', 'linen' =&gt; '250,240,230', 'magenta' =&gt; '255,0,255', 'maroon' =&gt; '128,0,0', 'mediumaquamarine' =&gt; '102,205,170', 'mediumblue' =&gt; '0,0,205', 'mediumorchid' =&gt; '186,85,211', 'mediumpurple' =&gt; '147,112,219', 'mediumseagreen' =&gt; '60,179,113', 'mediumslateblue' =&gt; '123,104,238', 'mediumspringgreen' =&gt; '0,250,154', 'mediumturquoise' =&gt; '72,209,204', 'mediumvioletred' =&gt; '199,21,133', 'midnightblue' =&gt; '25,25,112', 'mintcream' =&gt; '245,255,250', 'mistyrose' =&gt; '255,228,225', 'moccasin' =&gt; '255,228,181', 'navajowhite' =&gt; '255,222,173', 'navy' =&gt; '0,0,128', 'oldlace' =&gt; '253,245,230', 'olive' =&gt; '128,128,0', 'olivedrab' =&gt; '107,142,35', 'orange' =&gt; '255,165,0', 'orangered' =&gt; '255,69,0', 'orchid' =&gt; '218,112,214', 'palegoldenrod' =&gt; '238,232,170', 'palegreen' =&gt; '152,251,152', 'paleturquoise' =&gt; '175,238,238', 'palevioletred' =&gt; '219,112,147', 'papayawhip' =&gt; '255,239,213', 'peachpuff' =&gt; '255,218,185', 'peru' =&gt; '205,133,63', 'pink' =&gt; '255,192,203', 'plum' =&gt; '221,160,221', 'powderblue' =&gt; '176,224,230', 'purple' =&gt; '128,0,128', 'red' =&gt; '255,0,0', 'rosybrown' =&gt; '188,143,143', 'royalblue' =&gt; '65,105,225', 'saddlebrown' =&gt; '139,69,19', 'salmon' =&gt; '250,128,114', 'sandybrown' =&gt; '244,164,96', 'seagreen' =&gt; '46,139,87', 'seashell' =&gt; '255,245,238', 'sienna' =&gt; '160,82,45', 'silver' =&gt; '192,192,192', 'skyblue' =&gt; '135,206,235', 'slateblue' =&gt; '106,90,205', 'slategray' =&gt; '112,128,144', 'slategrey' =&gt; '112,128,144', 'snow' =&gt; '255,250,250', 'springgreen' =&gt; '0,255,127', 'steelblue' =&gt; '70,130,180', 'tan' =&gt; '210,180,140', 'teal' =&gt; '0,128,128', 'thistle' =&gt; '216,191,216', 'tomato' =&gt; '255,99,71', 'transparent' =&gt; '0,0,0,0', 'turquoise' =&gt; '64,224,208', 'violet' =&gt; '238,130,238', 'wheat' =&gt; '245,222,179', 'white' =&gt; '255,255,255', 'whitesmoke' =&gt; '245,245,245', 'yellow' =&gt; '255,255,0', 'yellowgreen' =&gt; '154,205,50')</default>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="68" package="Default">
+        <name>findImport</name>
+        <full_name>findImport</full_name>
+        <argument line="68">
+          <name>$url</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="79" package="Default">
+        <name>fileExists</name>
+        <full_name>fileExists</full_name>
+        <argument line="79">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="global" line="83" package="Default">
+        <name>compressList</name>
+        <full_name>compressList</full_name>
+        <argument line="83">
+          <name>$items</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="83">
+          <name>$delim</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="global" line="88" package="Default">
+        <name>preg_quote</name>
+        <full_name>preg_quote</full_name>
+        <argument line="88">
+          <name>$what</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="92" package="Default">
+        <name>tryImport</name>
+        <full_name>tryImport</full_name>
+        <argument line="92">
+          <name>$importPath</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="92">
+          <name>$parentBlock</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="92">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="145" package="Default">
+        <name>compileImportedProps</name>
+        <full_name>compileImportedProps</full_name>
+        <argument line="145">
+          <name>$props</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="145">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="145">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="145">
+          <name>$sourceParser</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="145">
+          <name>$importDir</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="183" package="Default">
+        <name>compileBlock</name>
+        <full_name>compileBlock</full_name>
+        <docblock line="162">
+          <description>Recursively compiles a block.</description>
+          <long-description>&lt;p&gt;A block is analogous to a CSS block in most cases. A single LESS document
+is encapsulated in a block when parsed, but it does not have parent tags
+so all of it's children appear on the root level when compiled.&lt;/p&gt;
+
+&lt;p&gt;Blocks are made up of props and children.&lt;/p&gt;
+
+&lt;p&gt;Props are property instructions, array tuples which describe an action
+to be taken, eg. write a property, set a variable, mixin a block.&lt;/p&gt;
+
+&lt;p&gt;The children of a block are just all the blocks that are defined within.
+This is used to look up mixins when performing a mixin.&lt;/p&gt;
+
+&lt;p&gt;Compiling the block involves pushing a fresh environment on the stack,
+and iterating through the props, compiling each one.&lt;/p&gt;
+
+&lt;p&gt;See lessc::compileProp()&lt;/p&gt;</long-description>
+        </docblock>
+        <argument line="183">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="207" package="Default">
+        <name>compileCSSBlock</name>
+        <full_name>compileCSSBlock</full_name>
+        <argument line="207">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="221" package="Default">
+        <name>compileMedia</name>
+        <full_name>compileMedia</full_name>
+        <argument line="221">
+          <name>$media</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="246" package="Default">
+        <name>mediaParent</name>
+        <full_name>mediaParent</full_name>
+        <argument line="246">
+          <name>$scope</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="257" package="Default">
+        <name>compileNestedBlock</name>
+        <full_name>compileNestedBlock</full_name>
+        <argument line="257">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="257">
+          <name>$selectors</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="268" package="Default">
+        <name>compileRoot</name>
+        <full_name>compileRoot</full_name>
+        <argument line="268">
+          <name>$root</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="275" package="Default">
+        <name>compileProps</name>
+        <full_name>compileProps</full_name>
+        <argument line="275">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="275">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="281" package="Default">
+        <name>sortProps</name>
+        <full_name>sortProps</full_name>
+        <argument line="281">
+          <name>$props</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="281">
+          <name>$split</name>
+          <default>false</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="313" package="Default">
+        <name>compileMediaQuery</name>
+        <full_name>compileMediaQuery</full_name>
+        <argument line="313">
+          <name>$queries</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="346" package="Default">
+        <name>multiplyMedia</name>
+        <full_name>multiplyMedia</full_name>
+        <argument line="346">
+          <name>$env</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="346">
+          <name>$childQueries</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="373" package="Default">
+        <name>expandParentSelectors</name>
+        <full_name>expandParentSelectors</full_name>
+        <argument line="373">
+          <name>$tag</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="373">
+          <name>$replace</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="384" package="Default">
+        <name>findClosestSelectors</name>
+        <full_name>findClosestSelectors</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="400" package="Default">
+        <name>multiplySelectors</name>
+        <full_name>multiplySelectors</full_name>
+        <argument line="400">
+          <name>$selectors</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="431" package="Default">
+        <name>compileSelectors</name>
+        <full_name>compileSelectors</full_name>
+        <argument line="431">
+          <name>$selectors</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="446" package="Default">
+        <name>eq</name>
+        <full_name>eq</full_name>
+        <argument line="446">
+          <name>$left</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="446">
+          <name>$right</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="450" package="Default">
+        <name>patternMatch</name>
+        <full_name>patternMatch</full_name>
+        <argument line="450">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="450">
+          <name>$callingArgs</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="523" package="Default">
+        <name>patternMatchAll</name>
+        <full_name>patternMatchAll</full_name>
+        <argument line="523">
+          <name>$blocks</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="523">
+          <name>$callingArgs</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="535" package="Default">
+        <name>findBlocks</name>
+        <full_name>findBlocks</full_name>
+        <argument line="535">
+          <name>$searchIn</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="535">
+          <name>$path</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="535">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="535">
+          <name>$seen</name>
+          <default>array()</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="574" package="Default">
+        <name>zipSetArgs</name>
+        <full_name>zipSetArgs</full_name>
+        <argument line="574">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="574">
+          <name>$values</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="603" package="Default">
+        <name>compileProp</name>
+        <full_name>compileProp</full_name>
+        <argument line="603">
+          <name>$prop</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="603">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="603">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="725" package="Default">
+        <name>compileValue</name>
+        <full_name>compileValue</full_name>
+        <docblock line="714">
+          <description>Compiles a primitive value into a CSS property value.</description>
+          <long-description>&lt;p&gt;Values in lessphp are typed by being wrapped in arrays, their format is
+typically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;array(type, contents [, additional_contents]*)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The input is expected to be reduced. This function will not work on
+things like expressions and variables.&lt;/p&gt;</long-description>
+        </docblock>
+        <argument line="725">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="789" package="Default">
+        <name>lib_isnumber</name>
+        <full_name>lib_isnumber</full_name>
+        <argument line="789">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="793" package="Default">
+        <name>lib_isstring</name>
+        <full_name>lib_isstring</full_name>
+        <argument line="793">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="797" package="Default">
+        <name>lib_iscolor</name>
+        <full_name>lib_iscolor</full_name>
+        <argument line="797">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="801" package="Default">
+        <name>lib_iskeyword</name>
+        <full_name>lib_iskeyword</full_name>
+        <argument line="801">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="805" package="Default">
+        <name>lib_ispixel</name>
+        <full_name>lib_ispixel</full_name>
+        <argument line="805">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="809" package="Default">
+        <name>lib_ispercentage</name>
+        <full_name>lib_ispercentage</full_name>
+        <argument line="809">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="813" package="Default">
+        <name>lib_isem</name>
+        <full_name>lib_isem</full_name>
+        <argument line="813">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="817" package="Default">
+        <name>lib_isrem</name>
+        <full_name>lib_isrem</full_name>
+        <argument line="817">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="821" package="Default">
+        <name>lib_rgbahex</name>
+        <full_name>lib_rgbahex</full_name>
+        <argument line="821">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="831" package="Default">
+        <name>lib_argb</name>
+        <full_name>lib_argb</full_name>
+        <argument line="831">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="836" package="Default">
+        <name>lib_e</name>
+        <full_name>lib_e</full_name>
+        <argument line="836">
+          <name>$arg</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="854" package="Default">
+        <name>lib__sprintf</name>
+        <full_name>lib__sprintf</full_name>
+        <argument line="854">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="882" package="Default">
+        <name>lib_floor</name>
+        <full_name>lib_floor</full_name>
+        <argument line="882">
+          <name>$arg</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="887" package="Default">
+        <name>lib_ceil</name>
+        <full_name>lib_ceil</full_name>
+        <argument line="887">
+          <name>$arg</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="892" package="Default">
+        <name>lib_round</name>
+        <full_name>lib_round</full_name>
+        <argument line="892">
+          <name>$arg</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="901" package="Default">
+        <name>colorArgs</name>
+        <full_name>colorArgs</full_name>
+        <docblock line="897">
+          <description>Helper function to get arguments for color manipulation functions.</description>
+          <long-description>&lt;p&gt;takes a list that contains a color like thing and a percentage&lt;/p&gt;</long-description>
+        </docblock>
+        <argument line="901">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="912" package="Default">
+        <name>lib_darken</name>
+        <full_name>lib_darken</full_name>
+        <argument line="912">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="920" package="Default">
+        <name>lib_lighten</name>
+        <full_name>lib_lighten</full_name>
+        <argument line="920">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="928" package="Default">
+        <name>lib_saturate</name>
+        <full_name>lib_saturate</full_name>
+        <argument line="928">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="936" package="Default">
+        <name>lib_desaturate</name>
+        <full_name>lib_desaturate</full_name>
+        <argument line="936">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="944" package="Default">
+        <name>lib_spin</name>
+        <full_name>lib_spin</full_name>
+        <argument line="944">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="955" package="Default">
+        <name>lib_fadeout</name>
+        <full_name>lib_fadeout</full_name>
+        <argument line="955">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="961" package="Default">
+        <name>lib_fadein</name>
+        <full_name>lib_fadein</full_name>
+        <argument line="961">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="967" package="Default">
+        <name>lib_hue</name>
+        <full_name>lib_hue</full_name>
+        <argument line="967">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="972" package="Default">
+        <name>lib_saturation</name>
+        <full_name>lib_saturation</full_name>
+        <argument line="972">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="977" package="Default">
+        <name>lib_lightness</name>
+        <full_name>lib_lightness</full_name>
+        <argument line="977">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="984" package="Default">
+        <name>lib_alpha</name>
+        <full_name>lib_alpha</full_name>
+        <argument line="984">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="991" package="Default">
+        <name>lib_fade</name>
+        <full_name>lib_fade</full_name>
+        <argument line="991">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="997" package="Default">
+        <name>lib_percentage</name>
+        <full_name>lib_percentage</full_name>
+        <argument line="997">
+          <name>$arg</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1005" package="Default">
+        <name>lib_mix</name>
+        <full_name>lib_mix</full_name>
+        <argument line="1005">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1036" package="Default">
+        <name>lib_contrast</name>
+        <full_name>lib_contrast</full_name>
+        <argument line="1036">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1055" package="Default">
+        <name>assertColor</name>
+        <full_name>assertColor</full_name>
+        <argument line="1055">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1055">
+          <name>$error</name>
+          <default>"expected color value"</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1061" package="Default">
+        <name>assertNumber</name>
+        <full_name>assertNumber</full_name>
+        <argument line="1061">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1061">
+          <name>$error</name>
+          <default>"expecting number"</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1066" package="Default">
+        <name>toHSL</name>
+        <full_name>toHSL</full_name>
+        <argument line="1066">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1101" package="Default">
+        <name>toRGB_helper</name>
+        <full_name>toRGB_helper</full_name>
+        <argument line="1101">
+          <name>$comp</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1101">
+          <name>$temp1</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1101">
+          <name>$temp2</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1116" package="Default">
+        <name>toRGB</name>
+        <full_name>toRGB</full_name>
+        <docblock line="1112">
+          <description>Converts a hsl array into a color value in rgb.</description>
+          <long-description>&lt;p&gt;Expects H to be in range of 0 to 360, S and L in 0 to 100&lt;/p&gt;</long-description>
+        </docblock>
+        <argument line="1116">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1143" package="Default">
+        <name>clamp</name>
+        <full_name>clamp</full_name>
+        <argument line="1143">
+          <name>$v</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1143">
+          <name>$max</name>
+          <default>1</default>
+          <type/>
+        </argument>
+        <argument line="1143">
+          <name>$min</name>
+          <default>0</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1151" package="Default">
+        <name>funcToColor</name>
+        <full_name>funcToColor</full_name>
+        <docblock line="1147">
+          <description>Convert the rgb, rgba, hsl color literals of function type
+as returned by the parser into values of color type.</description>
+          <long-description/>
+        </docblock>
+        <argument line="1151">
+          <name>$func</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1203" package="Default">
+        <name>reduce</name>
+        <full_name>reduce</full_name>
+        <argument line="1203">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1203">
+          <name>$forExpression</name>
+          <default>false</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1305" package="Default">
+        <name>coerceColor</name>
+        <full_name>coerceColor</full_name>
+        <argument line="1305">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1337" package="Default">
+        <name>coerceString</name>
+        <full_name>coerceString</full_name>
+        <argument line="1337">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1348" package="Default">
+        <name>flattenList</name>
+        <full_name>flattenList</full_name>
+        <argument line="1348">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1355" package="Default">
+        <name>toBool</name>
+        <full_name>toBool</full_name>
+        <argument line="1355">
+          <name>$a</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1361" package="Default">
+        <name>evaluate</name>
+        <full_name>evaluate</full_name>
+        <argument line="1361">
+          <name>$exp</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1406" package="Default">
+        <name>stringConcatenate</name>
+        <full_name>stringConcatenate</full_name>
+        <argument line="1406">
+          <name>$left</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1406">
+          <name>$right</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1423" package="Default">
+        <name>fixColor</name>
+        <full_name>fixColor</full_name>
+        <argument line="1423">
+          <name>$c</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1432" package="Default">
+        <name>op_number_color</name>
+        <full_name>op_number_color</full_name>
+        <argument line="1432">
+          <name>$op</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1432">
+          <name>$lft</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1432">
+          <name>$rgt</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1438" package="Default">
+        <name>op_color_number</name>
+        <full_name>op_color_number</full_name>
+        <argument line="1438">
+          <name>$op</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1438">
+          <name>$lft</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1438">
+          <name>$rgt</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1445" package="Default">
+        <name>op_color_color</name>
+        <full_name>op_color_color</full_name>
+        <argument line="1445">
+          <name>$op</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1445">
+          <name>$left</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1445">
+          <name>$right</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1475" package="Default">
+        <name>lib_red</name>
+        <full_name>lib_red</full_name>
+        <argument line="1475">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1484" package="Default">
+        <name>lib_green</name>
+        <full_name>lib_green</full_name>
+        <argument line="1484">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1493" package="Default">
+        <name>lib_blue</name>
+        <full_name>lib_blue</full_name>
+        <argument line="1493">
+          <name>$color</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1504" package="Default">
+        <name>op_number_number</name>
+        <full_name>op_number_number</full_name>
+        <argument line="1504">
+          <name>$op</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1504">
+          <name>$left</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1504">
+          <name>$right</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1543" package="Default">
+        <name>makeOutputBlock</name>
+        <full_name>makeOutputBlock</full_name>
+        <argument line="1543">
+          <name>$type</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1543">
+          <name>$selectors</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1554" package="Default">
+        <name>pushEnv</name>
+        <full_name>pushEnv</full_name>
+        <argument line="1554">
+          <name>$block</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1565" package="Default">
+        <name>popEnv</name>
+        <full_name>popEnv</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1572" package="Default">
+        <name>set</name>
+        <full_name>set</full_name>
+        <argument line="1572">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1572">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1578" package="Default">
+        <name>get</name>
+        <full_name>get</full_name>
+        <argument line="1578">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1578">
+          <name>$default</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1599" package="Default">
+        <name>injectVariables</name>
+        <full_name>injectVariables</full_name>
+        <argument line="1599">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1618" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="1614">
+          <description>Initialize any static state, can initialize parser for a file
+$opts isn't used yet</description>
+          <long-description/>
+        </docblock>
+        <argument line="1618">
+          <name>$fname</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1625" package="Default">
+        <name>compile</name>
+        <full_name>compile</full_name>
+        <argument line="1625">
+          <name>$string</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1625">
+          <name>$name</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1651" package="Default">
+        <name>compileFile</name>
+        <full_name>compileFile</full_name>
+        <argument line="1651">
+          <name>$fname</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1651">
+          <name>$outFname</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1678" package="Default">
+        <name>checkedCompile</name>
+        <full_name>checkedCompile</full_name>
+        <argument line="1678">
+          <name>$in</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1678">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1706" package="Default">
+        <name>cachedCompile</name>
+        <full_name>cachedCompile</full_name>
+        <docblock line="1686">
+          <description>Execute lessphp on a .less file or a lessphp cache structure</description>
+          <long-description>&lt;p&gt;The lessphp cache structure contains information about a specific
+less file having been parsed. It can be used as a hint for future
+calls to determine whether or not a rebuild is required.&lt;/p&gt;
+
+&lt;p&gt;The cache structure contains two important keys that may be used
+externally:&lt;/p&gt;
+
+&lt;p&gt;compiled: The final compiled CSS
+updated: The time (in seconds) the CSS was last compiled&lt;/p&gt;
+
+&lt;p&gt;The cache structure is a plain-ol' PHP associative array and can
+be serialized and unserialized without a hitch.&lt;/p&gt;</long-description>
+          <tag line="1686" name="param" description="Input" type="mixed" variable="$in">
+            <type by_reference="false">mixed</type>
+          </tag>
+          <tag line="1686" name="param" description="Force rebuild?" type="bool" variable="$force">
+            <type by_reference="false">bool</type>
+          </tag>
+          <tag line="1686" name="return" description="lessphp cache structure" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="1706">
+          <name>$in</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1706">
+          <name>$force</name>
+          <default>false</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1752" package="Default">
+        <name>parse</name>
+        <full_name>parse</full_name>
+        <argument line="1752">
+          <name>$str</name>
+          <default>null</default>
+          <type/>
+        </argument>
+        <argument line="1752">
+          <name>$initialVariables</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1777" package="Default">
+        <name>makeParser</name>
+        <full_name>makeParser</full_name>
+        <argument line="1777">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1784" package="Default">
+        <name>setFormatter</name>
+        <full_name>setFormatter</full_name>
+        <argument line="1784">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1788" package="Default">
+        <name>newFormatter</name>
+        <full_name>newFormatter</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1799" package="Default">
+        <name>setPreserveComments</name>
+        <full_name>setPreserveComments</full_name>
+        <argument line="1799">
+          <name>$preserve</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1803" package="Default">
+        <name>registerFunction</name>
+        <full_name>registerFunction</full_name>
+        <argument line="1803">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1803">
+          <name>$func</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1807" package="Default">
+        <name>unregisterFunction</name>
+        <full_name>unregisterFunction</full_name>
+        <argument line="1807">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1811" package="Default">
+        <name>setVariables</name>
+        <full_name>setVariables</full_name>
+        <argument line="1811">
+          <name>$variables</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1815" package="Default">
+        <name>unsetVariable</name>
+        <full_name>unsetVariable</full_name>
+        <argument line="1815">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1819" package="Default">
+        <name>setImportDir</name>
+        <full_name>setImportDir</full_name>
+        <argument line="1819">
+          <name>$dirs</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1823" package="Default">
+        <name>addImportDir</name>
+        <full_name>addImportDir</full_name>
+        <argument line="1823">
+          <name>$dir</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="1828" package="Default">
+        <name>allParsedFiles</name>
+        <full_name>allParsedFiles</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1832" package="Default">
+        <name>addParsedFile</name>
+        <full_name>addParsedFile</full_name>
+        <argument line="1832">
+          <name>$file</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="1839" package="Default">
+        <name>throwError</name>
+        <full_name>throwError</full_name>
+        <docblock line="1836">
+          <description>Uses the current value of $this-&gt;count to show line and line number</description>
+          <long-description/>
+        </docblock>
+        <argument line="1839">
+          <name>$msg</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="global" line="1848" package="Default">
+        <name>ccompile</name>
+        <full_name>ccompile</full_name>
+        <argument line="1848">
+          <name>$in</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1848">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1848">
+          <name>$less</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="global" line="1855" package="Default">
+        <name>cexecute</name>
+        <full_name>cexecute</full_name>
+        <argument line="1855">
+          <name>$in</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="1855">
+          <name>$force</name>
+          <default>false</default>
+          <type/>
+        </argument>
+        <argument line="1855">
+          <name>$less</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+    <class final="false" abstract="false" namespace="global" line="2016" package="Default">
+      <extends/>
+      <name>lessc_parser</name>
+      <full_name>\lessc_parser</full_name>
+      <property final="false" static="true" visibility="protected" line="2017" namespace="global" package="Default">
+        <name>$nextBlockId</name>
+        <default>0</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2019" namespace="global" package="Default">
+        <name>$precedence</name>
+        <default>array('=&lt;' =&gt; 0, '&gt;=' =&gt; 0, '=' =&gt; 0, '&lt;' =&gt; 0, '&gt;' =&gt; 0, '+' =&gt; 1, '-' =&gt; 1, '*' =&gt; 2, '/' =&gt; 2, '%' =&gt; 2)</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2033" namespace="global" package="Default">
+        <name>$whitePattern</name>
+        <default/>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2034" namespace="global" package="Default">
+        <name>$commentMulti</name>
+        <default/>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2036" namespace="global" package="Default">
+        <name>$commentSingle</name>
+        <default>"//"</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2037" namespace="global" package="Default">
+        <name>$commentMultiLeft</name>
+        <default>"/*"</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2038" namespace="global" package="Default">
+        <name>$commentMultiRight</name>
+        <default>"*/"</default>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2041" namespace="global" package="Default">
+        <name>$operatorString</name>
+        <default/>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2044" namespace="global" package="Default">
+        <name>$supressDivisionProps</name>
+        <default>array('/border-radius$/i', '/^font$/i')</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="2047" namespace="global" package="Default">
+        <name>$blockDirectives</name>
+        <default>array("font-face", "keyframes", "page", "-moz-document")</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="2048" namespace="global" package="Default">
+        <name>$lineDirectives</name>
+        <default>array("charset")</default>
+      </property>
+      <property final="false" static="false" visibility="protected" line="2059" namespace="global" package="Default">
+        <name>$inParens</name>
+        <default>false</default>
+        <docblock line="2050">
+          <description>if we are in parens we can be more liberal with whitespace around
+operators because it must evaluate to a single value and thus is less
+ambiguous.</description>
+          <long-description>&lt;p&gt;Consider:
+    property1: 10 -5; // is two numbers, 10 and -5
+    property2: (10 -5); // should evaluate to 5&lt;/p&gt;</long-description>
+        </docblock>
+      </property>
+      <property final="false" static="true" visibility="protected" line="2062" namespace="global" package="Default">
+        <name>$literalCache</name>
+        <default>array()</default>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="2064" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <argument line="2064">
+          <name>$lessc</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2064">
+          <name>$sourceName</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="2087" package="Default">
+        <name>parse</name>
+        <full_name>parse</full_name>
+        <argument line="2087">
+          <name>$buffer</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2154" package="Default">
+        <name>parseChunk</name>
+        <full_name>parseChunk</full_name>
+        <docblock line="2118">
+          <description>Parse a single chunk off the head of the buffer and append it to the
+current parse environment.</description>
+          <long-description>&lt;p&gt;Returns false when the buffer is empty, or when there is an error.&lt;/p&gt;
+
+&lt;p&gt;This function is called repeatedly until the entire document is
+parsed.&lt;/p&gt;
+
+&lt;p&gt;This parser is most similar to a recursive descent parser. Single
+functions represent discrete grammatical rules for the language, and
+they are able to capture the text that represents those rules.&lt;/p&gt;
+
+&lt;p&gt;Consider the function lessc::keyword(). (all parse functions are
+structured the same)&lt;/p&gt;
+
+&lt;p&gt;The function takes a single reference argument. When calling the
+function it will attempt to match a keyword on the head of the buffer.
+If it is successful, it will place the keyword in the referenced
+argument, advance the position in the buffer, and return true. If it
+fails then it won't advance the buffer and it will return false.&lt;/p&gt;
+
+&lt;p&gt;All of these parse functions are powered by lessc::match(), which behaves
+the same way, but takes a literal regular expression. Sometimes it is
+more convenient to use match instead of creating a new function.&lt;/p&gt;
+
+&lt;p&gt;Because of the format of the functions, to parse an entire string of
+grammatical rules, you can chain them together using &amp;amp;&amp;amp;.&lt;/p&gt;
+
+&lt;p&gt;But, if some of the rules in the chain succeed before one fails, then
+the buffer position will be left at an invalid state. In order to
+avoid this, lessc::seek() is used to remember and set buffer positions.&lt;/p&gt;
+
+&lt;p&gt;Before parsing a chain, use $s = $this-&gt;seek() to remember the current
+position into $s. Then if a chain fails, use $this-&gt;seek($s) to
+go back where we started.&lt;/p&gt;</long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2311" package="Default">
+        <name>isDirective</name>
+        <full_name>isDirective</full_name>
+        <argument line="2311">
+          <name>$dirname</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2311">
+          <name>$directives</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2320" package="Default">
+        <name>fixTags</name>
+        <full_name>fixTags</full_name>
+        <argument line="2320">
+          <name>$tags</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2330" package="Default">
+        <name>expressionList</name>
+        <full_name>expressionList</full_name>
+        <argument line="2330">
+          <name>$exps</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2347" package="Default">
+        <name>expression</name>
+        <full_name>expression</full_name>
+        <docblock line="2343">
+          <description>Attempt to consume an expression.</description>
+          <long-description/>
+          <tag line="2343" name="link" description="http://en.wikipedia.org/wiki/Operator-precedence_parser#Pseudo-code" link="http://en.wikipedia.org/wiki/Operator-precedence_parser#Pseudo-code"/>
+        </docblock>
+        <argument line="2347">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2371" package="Default">
+        <name>expHelper</name>
+        <full_name>expHelper</full_name>
+        <docblock line="2368">
+          <description>recursively parse infix equation with $lhs at precedence $minP</description>
+          <long-description/>
+        </docblock>
+        <argument line="2371">
+          <name>$lhs</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2371">
+          <name>$minP</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="2419" package="Default">
+        <name>propertyValue</name>
+        <full_name>propertyValue</full_name>
+        <argument line="2419">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2419">
+          <name>$keyName</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2441" package="Default">
+        <name>parenValue</name>
+        <full_name>parenValue</full_name>
+        <argument line="2441">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2466" package="Default">
+        <name>value</name>
+        <full_name>value</full_name>
+        <argument line="2466">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2521" package="Default">
+        <name>import</name>
+        <full_name>import</full_name>
+        <argument line="2521">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2535" package="Default">
+        <name>mediaQueryList</name>
+        <full_name>mediaQueryList</full_name>
+        <argument line="2535">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2543" package="Default">
+        <name>mediaQuery</name>
+        <full_name>mediaQuery</full_name>
+        <argument line="2543">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2576" package="Default">
+        <name>mediaExpression</name>
+        <full_name>mediaExpression</full_name>
+        <argument line="2576">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2594" package="Default">
+        <name>openString</name>
+        <full_name>openString</full_name>
+        <argument line="2594">
+          <name>$end</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2594">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2594">
+          <name>$nestingOpen</name>
+          <default>null</default>
+          <type/>
+        </argument>
+        <argument line="2594">
+          <name>$rejectStrs</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2663" package="Default">
+        <name>string</name>
+        <full_name>string</full_name>
+        <argument line="2663">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2714" package="Default">
+        <name>interpolation</name>
+        <full_name>interpolation</full_name>
+        <argument line="2714">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2734" package="Default">
+        <name>unit</name>
+        <full_name>unit</full_name>
+        <argument line="2734">
+          <name>$unit</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2749" package="Default">
+        <name>color</name>
+        <full_name>color</full_name>
+        <argument line="2749">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2763" package="Default">
+        <name>argumentValues</name>
+        <full_name>argumentValues</full_name>
+        <argument line="2763">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2763">
+          <name>$delim</name>
+          <default>','</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2789" package="Default">
+        <name>argumentDef</name>
+        <full_name>argumentDef</full_name>
+        <argument line="2789">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2789">
+          <name>$isVararg</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2789">
+          <name>$delim</name>
+          <default>','</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2838" package="Default">
+        <name>tags</name>
+        <full_name>tags</full_name>
+        <argument line="2838">
+          <name>$tags</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2838">
+          <name>$simple</name>
+          <default>false</default>
+          <type/>
+        </argument>
+        <argument line="2838">
+          <name>$delim</name>
+          <default>','</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2851" package="Default">
+        <name>mixinTags</name>
+        <full_name>mixinTags</full_name>
+        <argument line="2851">
+          <name>$tags</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2865" package="Default">
+        <name>tagBracket</name>
+        <full_name>tagBracket</full_name>
+        <argument line="2865">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2886" package="Default">
+        <name>tagExpression</name>
+        <full_name>tagExpression</full_name>
+        <argument line="2886">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2898" package="Default">
+        <name>tag</name>
+        <full_name>tag</full_name>
+        <argument line="2898">
+          <name>$tag</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="2898">
+          <name>$simple</name>
+          <default>false</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2933" package="Default">
+        <name>func</name>
+        <full_name>func</full_name>
+        <argument line="2933">
+          <name>$func</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2976" package="Default">
+        <name>variable</name>
+        <full_name>variable</full_name>
+        <argument line="2976">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="2998" package="Default">
+        <name>assign</name>
+        <full_name>assign</full_name>
+        <docblock line="2994">
+          <description>Consume an assignment operator
+Can optionally take a name that will be set to the current property name</description>
+          <long-description/>
+        </docblock>
+        <argument line="2998">
+          <name>$name</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3004" package="Default">
+        <name>keyword</name>
+        <full_name>keyword</full_name>
+        <argument line="3004">
+          <name>$word</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3013" package="Default">
+        <name>end</name>
+        <full_name>end</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3023" package="Default">
+        <name>guards</name>
+        <full_name>guards</full_name>
+        <argument line="3023">
+          <name>$guards</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3049" package="Default">
+        <name>guardGroup</name>
+        <full_name>guardGroup</full_name>
+        <argument line="3049">
+          <name>$guardGroup</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3066" package="Default">
+        <name>guard</name>
+        <full_name>guard</full_name>
+        <argument line="3066">
+          <name>$guard</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3082" package="Default">
+        <name>literal</name>
+        <full_name>literal</full_name>
+        <argument line="3082">
+          <name>$what</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3082">
+          <name>$eatWhitespace</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3105" package="Default">
+        <name>genericList</name>
+        <full_name>genericList</full_name>
+        <argument line="3105">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3105">
+          <name>$parseItem</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3105">
+          <name>$delim</name>
+          <default>""</default>
+          <type/>
+        </argument>
+        <argument line="3105">
+          <name>$flatten</name>
+          <default>true</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3133" package="Default">
+        <name>to</name>
+        <full_name>to</full_name>
+        <argument line="3133">
+          <name>$what</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3133">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3133">
+          <name>$until</name>
+          <default>false</default>
+          <type/>
+        </argument>
+        <argument line="3133">
+          <name>$allowNewline</name>
+          <default>false</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3146" package="Default">
+        <name>match</name>
+        <full_name>match</full_name>
+        <argument line="3146">
+          <name>$regex</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3146">
+          <name>$out</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3146">
+          <name>$eatWhitespace</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3159" package="Default">
+        <name>whitespace</name>
+        <full_name>whitespace</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3178" package="Default">
+        <name>peek</name>
+        <full_name>peek</full_name>
+        <argument line="3178">
+          <name>$regex</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3178">
+          <name>$out</name>
+          <default>null</default>
+          <type/>
+        </argument>
+        <argument line="3178">
+          <name>$from</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3187" package="Default">
+        <name>seek</name>
+        <full_name>seek</full_name>
+        <argument line="3187">
+          <name>$where</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="3195" package="Default">
+        <name>throwError</name>
+        <full_name>throwError</full_name>
+        <argument line="3195">
+          <name>$msg</name>
+          <default>"parse error"</default>
+          <type/>
+        </argument>
+        <argument line="3195">
+          <name>$count</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3215" package="Default">
+        <name>pushBlock</name>
+        <full_name>pushBlock</full_name>
+        <argument line="3215">
+          <name>$selectors</name>
+          <default>null</default>
+          <type/>
+        </argument>
+        <argument line="3215">
+          <name>$type</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3233" package="Default">
+        <name>pushSpecialBlock</name>
+        <full_name>pushSpecialBlock</full_name>
+        <argument line="3233">
+          <name>$type</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3238" package="Default">
+        <name>append</name>
+        <full_name>append</full_name>
+        <argument line="3238">
+          <name>$prop</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3238">
+          <name>$pos</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3244" package="Default">
+        <name>pop</name>
+        <full_name>pop</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3252" package="Default">
+        <name>removeComments</name>
+        <full_name>removeComments</full_name>
+        <argument line="3252">
+          <name>$text</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+    </class>
+    <class final="false" abstract="false" namespace="global" line="3309" package="Default">
+      <extends/>
+      <name>lessc_formatter_classic</name>
+      <full_name>\lessc_formatter_classic</full_name>
+      <property final="false" static="false" visibility="public" line="3310" namespace="global" package="Default">
+        <name>$indentChar</name>
+        <default>"  "</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3312" namespace="global" package="Default">
+        <name>$break</name>
+        <default>"\n"</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3313" namespace="global" package="Default">
+        <name>$open</name>
+        <default>" {"</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3314" namespace="global" package="Default">
+        <name>$close</name>
+        <default>"}"</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3315" namespace="global" package="Default">
+        <name>$selectorSeparator</name>
+        <default>", "</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3316" namespace="global" package="Default">
+        <name>$assignSeparator</name>
+        <default>":"</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3318" namespace="global" package="Default">
+        <name>$openSingle</name>
+        <default>" { "</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3319" namespace="global" package="Default">
+        <name>$closeSingle</name>
+        <default>" }"</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3321" namespace="global" package="Default">
+        <name>$disableSingle</name>
+        <default>false</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3322" namespace="global" package="Default">
+        <name>$breakSelectors</name>
+        <default>false</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3324" namespace="global" package="Default">
+        <name>$compressColors</name>
+        <default>false</default>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="3326" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="3330" package="Default">
+        <name>indentStr</name>
+        <full_name>indentStr</full_name>
+        <argument line="3330">
+          <name>$n</name>
+          <default>0</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="3334" package="Default">
+        <name>property</name>
+        <full_name>property</full_name>
+        <argument line="3334">
+          <name>$name</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="3334">
+          <name>$value</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="protected" namespace="global" line="3338" package="Default">
+        <name>isEmpty</name>
+        <full_name>isEmpty</full_name>
+        <argument line="3338">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="3349" package="Default">
+        <name>block</name>
+        <full_name>block</full_name>
+        <argument line="3349">
+          <name>$block</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+    </class>
+    <class final="false" abstract="false" namespace="global" line="3404" package="Default">
+      <extends>\lessc_formatter_classic</extends>
+      <name>lessc_formatter_compressed</name>
+      <full_name>\lessc_formatter_compressed</full_name>
+      <property final="false" static="false" visibility="public" line="3405" namespace="global" package="Default">
+        <name>$disableSingle</name>
+        <default>true</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3406" namespace="global" package="Default">
+        <name>$open</name>
+        <default>"{"</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3407" namespace="global" package="Default">
+        <name>$selectorSeparator</name>
+        <default>","</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3408" namespace="global" package="Default">
+        <name>$assignSeparator</name>
+        <default>":"</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3409" namespace="global" package="Default">
+        <name>$break</name>
+        <default>""</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3410" namespace="global" package="Default">
+        <name>$compressColors</name>
+        <default>true</default>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="3412" package="Default">
+        <name>indentStr</name>
+        <full_name>indentStr</full_name>
+        <argument line="3412">
+          <name>$n</name>
+          <default>0</default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+    <class final="false" abstract="false" namespace="global" line="3417" package="Default">
+      <extends>\lessc_formatter_classic</extends>
+      <name>lessc_formatter_lessjs</name>
+      <full_name>\lessc_formatter_lessjs</full_name>
+      <property final="false" static="false" visibility="public" line="3418" namespace="global" package="Default">
+        <name>$disableSingle</name>
+        <default>true</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3419" namespace="global" package="Default">
+        <name>$breakSelectors</name>
+        <default>true</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3420" namespace="global" package="Default">
+        <name>$assignSeparator</name>
+        <default>": "</default>
+      </property>
+      <property final="false" static="false" visibility="public" line="3421" namespace="global" package="Default">
+        <name>$selectorSeparator</name>
+        <default>","</default>
+      </property>
+    </class>
+    <markers>
+      <todo line="125">need to mark the source parser	these came from this file</todo>
+      <todo line="150">this is because the importDir api is stupid</todo>
+      <todo line="1729">Throw an exception? We got neither a string nor something</todo>
+      <todo line="2111">report where the block was opened</todo>
+      <todo line="2312">cache pattern in parser</todo>
+      <todo line="3048">rename to guardGroup</todo>
+      <todo line="3207">this depends on $this-&gt;count</todo>
+      <todo line="3222">kill me from here</todo>
+    </markers>
+    <parse_markers>
+      <error line="41" code="50018">No DocBlock was found for property $VERSION</error>
+      <error line="42" code="50018">No DocBlock was found for property $TRUE</error>
+      <error line="43" code="50018">No DocBlock was found for property $FALSE</error>
+      <error line="45" code="50018">No DocBlock was found for property $libFunctions</error>
+      <error line="46" code="50018">No DocBlock was found for property $registeredVars</error>
+      <error line="47" code="50018">No DocBlock was found for property $preserveComments</error>
+      <error line="49" code="50018">No DocBlock was found for property $vPrefix</error>
+      <error line="50" code="50018">No DocBlock was found for property $mPrefix</error>
+      <error line="51" code="50018">No DocBlock was found for property $parentSelector</error>
+      <error line="53" code="50018">No DocBlock was found for property $importDisabled</error>
+      <error line="54" code="50018">No DocBlock was found for property $importDir</error>
+      <error line="56" code="50018">No DocBlock was found for property $numberPrecision</error>
+      <error line="60" code="50018">No DocBlock was found for property $sourceParser</error>
+      <error line="61" code="50018">No DocBlock was found for property $sourceLoc</error>
+      <error line="63" code="50018">No DocBlock was found for property $defaultValue</error>
+      <error line="65" code="50018">No DocBlock was found for property $nextImportId</error>
+      <error line="1862" code="50018">No DocBlock was found for property $cssColors</error>
+      <error line="68" code="50010">No DocBlock was found for method findImport()</error>
+      <error line="79" code="50010">No DocBlock was found for method fileExists()</error>
+      <error line="83" code="50010">No DocBlock was found for method compressList()</error>
+      <error line="88" code="50010">No DocBlock was found for method preg_quote()</error>
+      <error line="92" code="50010">No DocBlock was found for method tryImport()</error>
+      <error line="145" code="50010">No DocBlock was found for method compileImportedProps()</error>
+      <error line="162" code="50015">Argument $block is missing from the Docblock of compileBlock()</error>
+      <error line="207" code="50010">No DocBlock was found for method compileCSSBlock()</error>
+      <error line="221" code="50010">No DocBlock was found for method compileMedia()</error>
+      <error line="246" code="50010">No DocBlock was found for method mediaParent()</error>
+      <error line="257" code="50010">No DocBlock was found for method compileNestedBlock()</error>
+      <error line="268" code="50010">No DocBlock was found for method compileRoot()</error>
+      <error line="275" code="50010">No DocBlock was found for method compileProps()</error>
+      <error line="281" code="50010">No DocBlock was found for method sortProps()</error>
+      <error line="313" code="50010">No DocBlock was found for method compileMediaQuery()</error>
+      <error line="346" code="50010">No DocBlock was found for method multiplyMedia()</error>
+      <error line="373" code="50010">No DocBlock was found for method expandParentSelectors()</error>
+      <error line="384" code="50010">No DocBlock was found for method findClosestSelectors()</error>
+      <error line="400" code="50010">No DocBlock was found for method multiplySelectors()</error>
+      <error line="431" code="50010">No DocBlock was found for method compileSelectors()</error>
+      <error line="446" code="50010">No DocBlock was found for method eq()</error>
+      <error line="450" code="50010">No DocBlock was found for method patternMatch()</error>
+      <error line="523" code="50010">No DocBlock was found for method patternMatchAll()</error>
+      <error line="535" code="50010">No DocBlock was found for method findBlocks()</error>
+      <error line="574" code="50010">No DocBlock was found for method zipSetArgs()</error>
+      <error line="603" code="50010">No DocBlock was found for method compileProp()</error>
+      <error line="714" code="50015">Argument $value is missing from the Docblock of compileValue()</error>
+      <error line="789" code="50010">No DocBlock was found for method lib_isnumber()</error>
+      <error line="793" code="50010">No DocBlock was found for method lib_isstring()</error>
+      <error line="797" code="50010">No DocBlock was found for method lib_iscolor()</error>
+      <error line="801" code="50010">No DocBlock was found for method lib_iskeyword()</error>
+      <error line="805" code="50010">No DocBlock was found for method lib_ispixel()</error>
+      <error line="809" code="50010">No DocBlock was found for method lib_ispercentage()</error>
+      <error line="813" code="50010">No DocBlock was found for method lib_isem()</error>
+      <error line="817" code="50010">No DocBlock was found for method lib_isrem()</error>
+      <error line="821" code="50010">No DocBlock was found for method lib_rgbahex()</error>
+      <error line="831" code="50010">No DocBlock was found for method lib_argb()</error>
+      <error line="836" code="50010">No DocBlock was found for method lib_e()</error>
+      <error line="854" code="50010">No DocBlock was found for method lib__sprintf()</error>
+      <error line="882" code="50010">No DocBlock was found for method lib_floor()</error>
+      <error line="887" code="50010">No DocBlock was found for method lib_ceil()</error>
+      <error line="892" code="50010">No DocBlock was found for method lib_round()</error>
+      <error line="897" code="50015">Argument $args is missing from the Docblock of colorArgs()</error>
+      <error line="912" code="50010">No DocBlock was found for method lib_darken()</error>
+      <error line="920" code="50010">No DocBlock was found for method lib_lighten()</error>
+      <error line="928" code="50010">No DocBlock was found for method lib_saturate()</error>
+      <error line="936" code="50010">No DocBlock was found for method lib_desaturate()</error>
+      <error line="944" code="50010">No DocBlock was found for method lib_spin()</error>
+      <error line="955" code="50010">No DocBlock was found for method lib_fadeout()</error>
+      <error line="961" code="50010">No DocBlock was found for method lib_fadein()</error>
+      <error line="967" code="50010">No DocBlock was found for method lib_hue()</error>
+      <error line="972" code="50010">No DocBlock was found for method lib_saturation()</error>
+      <error line="977" code="50010">No DocBlock was found for method lib_lightness()</error>
+      <error line="984" code="50010">No DocBlock was found for method lib_alpha()</error>
+      <error line="991" code="50010">No DocBlock was found for method lib_fade()</error>
+      <error line="997" code="50010">No DocBlock was found for method lib_percentage()</error>
+      <error line="1005" code="50010">No DocBlock was found for method lib_mix()</error>
+      <error line="1036" code="50010">No DocBlock was found for method lib_contrast()</error>
+      <error line="1055" code="50010">No DocBlock was found for method assertColor()</error>
+      <error line="1061" code="50010">No DocBlock was found for method assertNumber()</error>
+      <error line="1066" code="50010">No DocBlock was found for method toHSL()</error>
+      <error line="1101" code="50010">No DocBlock was found for method toRGB_helper()</error>
+      <error line="1112" code="50015">Argument $color is missing from the Docblock of toRGB()</error>
+      <error line="1143" code="50010">No DocBlock was found for method clamp()</error>
+      <error line="1147" code="50015">Argument $func is missing from the Docblock of funcToColor()</error>
+      <error line="1203" code="50010">No DocBlock was found for method reduce()</error>
+      <error line="1305" code="50010">No DocBlock was found for method coerceColor()</error>
+      <error line="1337" code="50010">No DocBlock was found for method coerceString()</error>
+      <error line="1348" code="50010">No DocBlock was found for method flattenList()</error>
+      <error line="1355" code="50010">No DocBlock was found for method toBool()</error>
+      <error line="1361" code="50010">No DocBlock was found for method evaluate()</error>
+      <error line="1406" code="50010">No DocBlock was found for method stringConcatenate()</error>
+      <error line="1423" code="50010">No DocBlock was found for method fixColor()</error>
+      <error line="1432" code="50010">No DocBlock was found for method op_number_color()</error>
+      <error line="1438" code="50010">No DocBlock was found for method op_color_number()</error>
+      <error line="1445" code="50010">No DocBlock was found for method op_color_color()</error>
+      <error line="1475" code="50010">No DocBlock was found for method lib_red()</error>
+      <error line="1484" code="50010">No DocBlock was found for method lib_green()</error>
+      <error line="1493" code="50010">No DocBlock was found for method lib_blue()</error>
+      <error line="1504" code="50010">No DocBlock was found for method op_number_number()</error>
+      <error line="1543" code="50010">No DocBlock was found for method makeOutputBlock()</error>
+      <error line="1554" code="50010">No DocBlock was found for method pushEnv()</error>
+      <error line="1565" code="50010">No DocBlock was found for method popEnv()</error>
+      <error line="1572" code="50010">No DocBlock was found for method set()</error>
+      <error line="1578" code="50010">No DocBlock was found for method get()</error>
+      <error line="1599" code="50010">No DocBlock was found for method injectVariables()</error>
+      <error line="1614" code="50015">Argument $fname is missing from the Docblock of __construct()</error>
+      <error line="1625" code="50010">No DocBlock was found for method compile()</error>
+      <error line="1651" code="50010">No DocBlock was found for method compileFile()</error>
+      <error line="1678" code="50010">No DocBlock was found for method checkedCompile()</error>
+      <error line="1752" code="50010">No DocBlock was found for method parse()</error>
+      <error line="1777" code="50010">No DocBlock was found for method makeParser()</error>
+      <error line="1784" code="50010">No DocBlock was found for method setFormatter()</error>
+      <error line="1788" code="50010">No DocBlock was found for method newFormatter()</error>
+      <error line="1799" code="50010">No DocBlock was found for method setPreserveComments()</error>
+      <error line="1803" code="50010">No DocBlock was found for method registerFunction()</error>
+      <error line="1807" code="50010">No DocBlock was found for method unregisterFunction()</error>
+      <error line="1811" code="50010">No DocBlock was found for method setVariables()</error>
+      <error line="1815" code="50010">No DocBlock was found for method unsetVariable()</error>
+      <error line="1819" code="50010">No DocBlock was found for method setImportDir()</error>
+      <error line="1823" code="50010">No DocBlock was found for method addImportDir()</error>
+      <error line="1828" code="50010">No DocBlock was found for method allParsedFiles()</error>
+      <error line="1832" code="50010">No DocBlock was found for method addParsedFile()</error>
+      <error line="1836" code="50015">Argument $msg is missing from the Docblock of throwError()</error>
+      <error line="1848" code="50010">No DocBlock was found for method ccompile()</error>
+      <error line="1855" code="50010">No DocBlock was found for method cexecute()</error>
+      <error line="2016" code="50000">No DocBlock was found for \lessc_parser</error>
+      <error line="2017" code="50018">No DocBlock was found for property $nextBlockId</error>
+      <error line="2019" code="50018">No DocBlock was found for property $precedence</error>
+      <error line="2033" code="50018">No DocBlock was found for property $whitePattern</error>
+      <error line="2034" code="50018">No DocBlock was found for property $commentMulti</error>
+      <error line="2036" code="50018">No DocBlock was found for property $commentSingle</error>
+      <error line="2037" code="50018">No DocBlock was found for property $commentMultiLeft</error>
+      <error line="2038" code="50018">No DocBlock was found for property $commentMultiRight</error>
+      <error line="2041" code="50018">No DocBlock was found for property $operatorString</error>
+      <error line="2044" code="50018">No DocBlock was found for property $supressDivisionProps</error>
+      <error line="2047" code="50018">No DocBlock was found for property $blockDirectives</error>
+      <error line="2048" code="50018">No DocBlock was found for property $lineDirectives</error>
+      <error line="2062" code="50018">No DocBlock was found for property $literalCache</error>
+      <error line="2064" code="50010">No DocBlock was found for method __construct()</error>
+      <error line="2087" code="50010">No DocBlock was found for method parse()</error>
+      <error line="2311" code="50010">No DocBlock was found for method isDirective()</error>
+      <error line="2320" code="50010">No DocBlock was found for method fixTags()</error>
+      <error line="2330" code="50010">No DocBlock was found for method expressionList()</error>
+      <error line="2343" code="50015">Argument $out is missing from the Docblock of expression()</error>
+      <error line="2368" code="50015">Argument $lhs is missing from the Docblock of expHelper()</error>
+      <error line="2368" code="50015">Argument $minP is missing from the Docblock of expHelper()</error>
+      <error line="2419" code="50010">No DocBlock was found for method propertyValue()</error>
+      <error line="2441" code="50010">No DocBlock was found for method parenValue()</error>
+      <error line="2466" code="50010">No DocBlock was found for method value()</error>
+      <error line="2521" code="50010">No DocBlock was found for method import()</error>
+      <error line="2535" code="50010">No DocBlock was found for method mediaQueryList()</error>
+      <error line="2543" code="50010">No DocBlock was found for method mediaQuery()</error>
+      <error line="2576" code="50010">No DocBlock was found for method mediaExpression()</error>
+      <error line="2594" code="50010">No DocBlock was found for method openString()</error>
+      <error line="2663" code="50010">No DocBlock was found for method string()</error>
+      <error line="2714" code="50010">No DocBlock was found for method interpolation()</error>
+      <error line="2734" code="50010">No DocBlock was found for method unit()</error>
+      <error line="2749" code="50010">No DocBlock was found for method color()</error>
+      <error line="2763" code="50010">No DocBlock was found for method argumentValues()</error>
+      <error line="2789" code="50010">No DocBlock was found for method argumentDef()</error>
+      <error line="2838" code="50010">No DocBlock was found for method tags()</error>
+      <error line="2851" code="50010">No DocBlock was found for method mixinTags()</error>
+      <error line="2865" code="50010">No DocBlock was found for method tagBracket()</error>
+      <error line="2886" code="50010">No DocBlock was found for method tagExpression()</error>
+      <error line="2898" code="50010">No DocBlock was found for method tag()</error>
+      <error line="2933" code="50010">No DocBlock was found for method func()</error>
+      <error line="2976" code="50010">No DocBlock was found for method variable()</error>
+      <error line="2994" code="50015">Argument $name is missing from the Docblock of assign()</error>
+      <error line="3004" code="50010">No DocBlock was found for method keyword()</error>
+      <error line="3013" code="50010">No DocBlock was found for method end()</error>
+      <error line="3023" code="50010">No DocBlock was found for method guards()</error>
+      <error line="3049" code="50010">No DocBlock was found for method guardGroup()</error>
+      <error line="3066" code="50010">No DocBlock was found for method guard()</error>
+      <error line="3082" code="50010">No DocBlock was found for method literal()</error>
+      <error line="3105" code="50010">No DocBlock was found for method genericList()</error>
+      <error line="3133" code="50010">No DocBlock was found for method to()</error>
+      <error line="3146" code="50010">No DocBlock was found for method match()</error>
+      <error line="3159" code="50010">No DocBlock was found for method whitespace()</error>
+      <error line="3178" code="50010">No DocBlock was found for method peek()</error>
+      <error line="3187" code="50010">No DocBlock was found for method seek()</error>
+      <error line="3195" code="50010">No DocBlock was found for method throwError()</error>
+      <error line="3215" code="50010">No DocBlock was found for method pushBlock()</error>
+      <error line="3233" code="50010">No DocBlock was found for method pushSpecialBlock()</error>
+      <error line="3238" code="50010">No DocBlock was found for method append()</error>
+      <error line="3244" code="50010">No DocBlock was found for method pop()</error>
+      <error line="3252" code="50010">No DocBlock was found for method removeComments()</error>
+      <error line="3309" code="50000">No DocBlock was found for \lessc_formatter_classic</error>
+      <error line="3310" code="50018">No DocBlock was found for property $indentChar</error>
+      <error line="3312" code="50018">No DocBlock was found for property $break</error>
+      <error line="3313" code="50018">No DocBlock was found for property $open</error>
+      <error line="3314" code="50018">No DocBlock was found for property $close</error>
+      <error line="3315" code="50018">No DocBlock was found for property $selectorSeparator</error>
+      <error line="3316" code="50018">No DocBlock was found for property $assignSeparator</error>
+      <error line="3318" code="50018">No DocBlock was found for property $openSingle</error>
+      <error line="3319" code="50018">No DocBlock was found for property $closeSingle</error>
+      <error line="3321" code="50018">No DocBlock was found for property $disableSingle</error>
+      <error line="3322" code="50018">No DocBlock was found for property $breakSelectors</error>
+      <error line="3324" code="50018">No DocBlock was found for property $compressColors</error>
+      <error line="3326" code="50010">No DocBlock was found for method __construct()</error>
+      <error line="3330" code="50010">No DocBlock was found for method indentStr()</error>
+      <error line="3334" code="50010">No DocBlock was found for method property()</error>
+      <error line="3338" code="50010">No DocBlock was found for method isEmpty()</error>
+      <error line="3349" code="50010">No DocBlock was found for method block()</error>
+      <error line="3404" code="50000">No DocBlock was found for \lessc_formatter_compressed</error>
+      <error line="3405" code="50018">No DocBlock was found for property $disableSingle</error>
+      <error line="3406" code="50018">No DocBlock was found for property $open</error>
+      <error line="3407" code="50018">No DocBlock was found for property $selectorSeparator</error>
+      <error line="3408" code="50018">No DocBlock was found for property $assignSeparator</error>
+      <error line="3409" code="50018">No DocBlock was found for property $break</error>
+      <error line="3410" code="50018">No DocBlock was found for property $compressColors</error>
+      <error line="3412" code="50010">No DocBlock was found for method indentStr()</error>
+      <error line="3417" code="50000">No DocBlock was found for \lessc_formatter_lessjs</error>
+      <error line="3418" code="50018">No DocBlock was found for property $disableSingle</error>
+      <error line="3419" code="50018">No DocBlock was found for property $breakSelectors</error>
+      <error line="3420" code="50018">No DocBlock was found for property $assignSeparator</error>
+      <error line="3421" code="50018">No DocBlock was found for property $selectorSeparator</error>
+    </parse_markers>
+  </file>
+  <package name="Default" full_name="Default"/>
+  <namespace name="global" full_name="global"/>
+  <marker count="8">todo</marker>
+  <marker count="0">fixme</marker>
+  <deprecated count="0"/>
+</project>

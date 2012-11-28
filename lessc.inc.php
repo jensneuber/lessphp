@@ -53,6 +53,10 @@ class lessc {
 	public $importDisabled = false;
 	public $importDir = '';
 
+	public $currentParsedFile;
+	public $currentLine;
+	public $importLevel = 0;
+
 	protected $numberPrecision = null;
 
 	// set to the parser that generated the current line when compiling
@@ -110,8 +114,13 @@ class lessc {
 		}
 
 		$this->addParsedFile($realPath);
+
+		$this->importLevel++;
+
 		$parser = $this->makeParser($realPath);
 		$root = $parser->parse(file_get_contents($realPath));
+
+		//$this->importLevel--;
 
 		// set the parents of all the block props
 		foreach ($root->props as $prop) {
@@ -181,6 +190,7 @@ class lessc {
 	 *
 	 */
 	protected function compileBlock($block) {
+		//print_r($block);
 		switch ($block->type) {
 		case "root":
 			$this->compileRoot($block);
@@ -209,7 +219,7 @@ class lessc {
 
 		$selectors = $this->compileSelectors($block->tags);
 		$env->selectors = $this->multiplySelectors($selectors);
-		$out = $this->makeOutputBlock(null, $env->selectors);
+		$out = $this->makeOutputBlock(null, $env->selectors, $block->source);
 
 		$this->scope->children[] = $out;
 		$this->compileProps($block, $out);
@@ -1477,7 +1487,7 @@ class lessc {
 		if (is_null($color)) {
 			$this->throwError('color expected for red()');
 		}
-		
+
 		return $color[1];
 	}
 
@@ -1486,7 +1496,7 @@ class lessc {
 		if (is_null($color)) {
 			$this->throwError('color expected for green()');
 		}
-		
+
 		return $color[2];
 	}
 
@@ -1495,7 +1505,7 @@ class lessc {
 		if (is_null($color)) {
 			$this->throwError('color expected for blue()');
 		}
-		
+
 		return $color[3];
 	}
 
@@ -1540,13 +1550,16 @@ class lessc {
 
 	/* environment functions */
 
-	protected function makeOutputBlock($type, $selectors = null) {
+	protected function makeOutputBlock($type, $selectors = null, $debug = null) {
 		$b = new stdclass;
 		$b->lines = array();
 		$b->children = array();
 		$b->selectors = $selectors;
 		$b->type = $type;
 		$b->parent = $this->scope;
+
+		$b->debug = $debug;
+
 		return $b;
 	}
 
@@ -1661,7 +1674,7 @@ class lessc {
 		$this->importDir[] = $pi['dirname'].'/';
 
 		$this->allParsedFiles = array();
-		$this->addParsedFile($fname);
+		$this->addParsedFile($fname, true);
 
 		$out = $this->compile(file_get_contents($fname), $fname);
 
@@ -1716,8 +1729,8 @@ class lessc {
 				// specify the root to trigger a rebuild.
 				$root = $in['root'];
 			} elseif (isset($in['files']) and is_array($in['files'])) {
-				foreach ($in['files'] as $fname => $ftime ) {
-					if (!file_exists($fname) or filemtime($fname) > $ftime) {
+				foreach ($in['files'] as $fname => $fvalues ) {
+					if (!file_exists($fname) or filemtime($fname) > $fvalues['filetime']) {
 						// One of the files we knew about previously has changed
 						// so we should look at our incoming root again.
 						$root = $in['root'];
@@ -1775,6 +1788,7 @@ class lessc {
 	}
 
 	protected function makeParser($name) {
+		$this->currentParsedFile = $name;
 		$parser = new lessc_parser($this, $name);
 		$parser->writeComments = $this->preserveComments;
 
@@ -1829,8 +1843,12 @@ class lessc {
 		return $this->allParsedFiles;
 	}
 
-	protected function addParsedFile($file) {
-		$this->allParsedFiles[realpath($file)] = filemtime($file);
+	protected function addParsedFile($file, $isRoot = false) {
+		$this->allParsedFiles[$file] = array(
+			'filetime' => filemtime($file),
+			'importLevel' => $this->importLevel,
+			'position' => 0
+		);
 	}
 
 	/**
@@ -2037,6 +2055,9 @@ class lessc_parser {
 	static protected $commentMultiLeft = "/*";
 	static protected $commentMultiRight = "*/";
 
+	public $currentParsedFileParser;
+	public $currentLineParser;
+
 	// regex string to match any of the operators
 	static protected $operatorString;
 
@@ -2085,8 +2106,10 @@ class lessc_parser {
 	}
 
 	public function parse($buffer) {
+
 		$this->count = 0;
 		$this->line = 1;
+		$this->file = $this->lessc->currentParsedFile;
 
 		$this->env = null; // block stack
 		$this->buffer = $this->writeComments ? $buffer : $this->removeComments($buffer);
@@ -2100,6 +2123,12 @@ class lessc_parser {
 		// 	$this->buffer = ltrim($this->buffer);
 		// }
 		$this->whitespace();
+
+
+		// echo "\n--------\n";
+		// print_r($this);
+		// echo "\n--------\n";
+
 
 		// parse the entire file
 		$lastCount = $this->count;
@@ -2165,6 +2194,16 @@ class lessc_parser {
 			$this->seek($s);
 		}
 
+		$lessc = $this->lessc;
+
+		$posOld = $lessc->allParsedFiles[$lessc->currentParsedFile]['position'];
+		$posNew = $this->count;
+		$lessc->allParsedFiles[$lessc->currentParsedFile]['position'] = $this->count;
+
+		$subChunk = substr($this->buffer, 0,  $posNew);
+		$this->line = count(explode("\n", $subChunk));
+
+		$lessc->allParsedFiles[$lessc->currentParsedFile]['line'] = $this->line;
 
 		// look for special css blocks
 		if ($this->literal('@', false)) {
@@ -2236,6 +2275,7 @@ class lessc_parser {
 
 		// opening a simple block
 		if ($this->tags($tags) && $this->literal('{')) {
+
 			$tags = $this->fixTags($tags);
 			$this->pushBlock($tags);
 			return true;
@@ -3205,10 +3245,18 @@ class lessc_parser {
 
 	protected function pushBlock($selectors=null, $type=null) {
 		$b = new stdclass;
+		// $b->debug = array(
+		// 	"test" => $this
+		// );
 		$b->parent = $this->env;
 
 		$b->type = $type;
 		$b->id = self::$nextBlockId++;
+
+		$b->source = array(
+			"line" => $this->line,
+			"file" => $this->file
+		);
 
 		$b->isVararg = false; // TODO: kill me from here
 		$b->tags = $selectors;
@@ -3338,6 +3386,9 @@ class lessc_formatter_classic {
 	}
 
 	public function block($block) {
+
+		//print_r($block);
+
 		if ($this->isEmpty($block)) return;
 
 		$inner = $pre = $this->indentStr();
@@ -3346,6 +3397,7 @@ class lessc_formatter_classic {
 			is_null($block->type) && count($block->lines) == 1;
 
 		if (!empty($block->selectors)) {
+			echo "/* line ".$block->debug['line'] .", ".$block->debug['file'] ." */ ". $this->break;
 			$this->indentLevel++;
 
 			if ($this->breakSelectors) {
@@ -3356,15 +3408,19 @@ class lessc_formatter_classic {
 
 			echo $pre .
 				implode($selectorSeparator, $block->selectors);
+
 			if ($isSingle) {
 				echo $this->openSingle;
 				$inner = "";
 			} else {
-				echo $this->open . $this->break;
+				echo $this->open;
+				echo $this->break;
+
 				$inner = $this->indentStr();
 			}
-
 		}
+
+
 
 		if (!empty($block->lines)) {
 			$glue = $this->break.$inner;
