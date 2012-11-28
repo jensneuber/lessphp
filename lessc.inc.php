@@ -190,7 +190,7 @@ class lessc {
 	 *
 	 */
 	protected function compileBlock($block) {
-		//print_r($block);
+		//print_r($this->env->store);
 		switch ($block->type) {
 		case "root":
 			$this->compileRoot($block);
@@ -221,11 +221,16 @@ class lessc {
 		$env->selectors = $this->multiplySelectors($selectors);
 		$out = $this->makeOutputBlock(null, $env->selectors, $block->source);
 
+
 		$this->scope->children[] = $out;
 		$this->compileProps($block, $out);
 
 		$block->scope = $env; // mixins carry scope with them!
+
+		//print_r($block->scope->seenNames);
+
 		$this->popEnv();
+
 	}
 
 	protected function compileMedia($media) {
@@ -234,7 +239,7 @@ class lessc {
 
 		$query = $this->compileMediaQuery($this->multiplyMedia($env));
 
-		$this->scope = $this->makeOutputBlock($media->type, array($query));
+		$this->scope = $this->makeOutputBlock($media->type, array($query), $media->source);
 		$parentScope->children[] = $this->scope;
 
 		$this->compileProps($media, $this->scope);
@@ -266,7 +271,7 @@ class lessc {
 
 	protected function compileNestedBlock($block, $selectors) {
 		$this->pushEnv($block);
-		$this->scope = $this->makeOutputBlock($block->type, $selectors);
+		$this->scope = $this->makeOutputBlock($block->type, $selectors, $block->source);
 		$this->scope->parent->children[] = $this->scope;
 
 		$this->compileProps($block, $this->scope);
@@ -611,6 +616,9 @@ class lessc {
 
 	// compile a prop and update $lines or $blocks appropriately
 	protected function compileProp($prop, $block, $out) {
+
+		//print_r($prop);
+
 		// set error position context
 		$this->sourceLoc = isset($prop[-1]) ? $prop[-1] : -1;
 
@@ -620,8 +628,15 @@ class lessc {
 			if ($name[0] == $this->vPrefix) {
 				$this->set($name, $value);
 			} else {
-				$out->lines[] = $this->formatter->property($name,
-						$this->compileValue($this->reduce($value)));
+				$valueProps = $this->reduce($value);
+
+				if ($this->formatter->debug && $valueProps && count($valueProps) > 3 && $value[1][0] == "@"){
+					$debug = " /* ".$value[1]." @ line ".$valueProps[2].", ".$valueProps[3]." */ ";
+				}else{
+					$debug = "";
+				}
+
+				$out->lines[] = $this->formatter->property($name, $this->compileValue($valueProps), $debug);
 			}
 			break;
 		case 'block':
@@ -733,6 +748,9 @@ class lessc {
 	 * things like expressions and variables.
 	 */
 	protected function compileValue($value) {
+
+		//print_r($value);
+
 		switch ($value[0]) {
 		case 'list':
 			// [1] - delimiter
@@ -1211,6 +1229,7 @@ class lessc {
 	}
 
 	protected function reduce($value, $forExpression = false) {
+
 		switch ($value[0]) {
 		case "variable":
 			$key = $value[1];
@@ -1616,6 +1635,7 @@ class lessc {
 			if ($name{0} != '@') $name = '@'.$name;
 			$parser->count = 0;
 			$parser->buffer = (string)$strValue;
+			//print_r($parser->buffer);
 			if (!$parser->propertyValue($value)) {
 				throw new Exception("failed to parse passed in variable $name: $strValue");
 			}
@@ -2058,6 +2078,8 @@ class lessc_parser {
 	public $currentParsedFileParser;
 	public $currentLineParser;
 
+	public $blockValues;
+
 	// regex string to match any of the operators
 	static protected $operatorString;
 
@@ -2245,9 +2267,8 @@ class lessc_parser {
 		}
 
 		// setting a variable
-		if ($this->variable($var) && $this->assign() &&
-			$this->propertyValue($value) && $this->end())
-		{
+		if ($this->variable($var) && $this->assign() && $this->propertyValue($value) && $this->end()){
+
 			$this->append(array('assign', $var, $value), $s);
 			return true;
 		} else {
@@ -2525,6 +2546,15 @@ class lessc_parser {
 
 		// try a variable
 		if ($this->variable($var)) {
+
+			// echo "\n------\n";
+			// // print_r($var);
+			// // print_r($this->line);
+			// // print_r($this->file);
+
+			// echo $var." @ line ".$this->line.", ".$this->file;
+			// echo "\n------\n";
+
 			$value = array('variable', $var);
 			return true;
 		}
@@ -2782,7 +2812,8 @@ class lessc_parser {
 			if (strlen($m[1]) > 7) {
 				$out = array("string", "", array($m[1]));
 			} else {
-				$out = array("raw_color", $m[1]);
+				$out = array("raw_color", $m[1], $this->line, $this->file);
+				//$out = array("raw_color", $m[1]);
 			}
 			return true;
 		}
@@ -3244,6 +3275,11 @@ class lessc_parser {
 	}
 
 	protected function pushBlock($selectors=null, $type=null) {
+
+		//print_r($this->blockValues);
+
+		//$this->blockValues = array();
+
 		$b = new stdclass;
 		// $b->debug = array(
 		// 	"test" => $this
@@ -3275,6 +3311,19 @@ class lessc_parser {
 
 	// append a property to the current block
 	protected function append($prop, $pos = null) {
+
+		// if($prop[0] == "block"){
+
+		// 	if ($prop[1]->props[0][0] = "assign" && $prop[1]->props[0][2][0] == "variable"){
+		// 		//print_r($prop[1]->props[0][2][1]);
+		// 		$this->blockValues[] = $prop[1]->props[0][2][1];
+		// 		// print_r($this->blockValues);
+		// 		// print_r($this->file);
+		// 		// print_r($this->line);
+		// 	}
+		// }
+
+
 		if ($pos !== null) $prop[-1] = $pos;
 		$this->env->props[] = $prop;
 	}
@@ -3349,10 +3398,13 @@ class lessc_formatter_classic {
 	public $indentChar = "  ";
 
 	public $break = "\n";
+	public $breakAfterBlock = "\n";
 	public $open = " {";
 	public $close = "}";
 	public $selectorSeparator = ", ";
-	public $assignSeparator = ":";
+	public $assignSeparator = ": ";
+
+	public $debug = true;
 
 	public $openSingle = " { ";
 	public $closeSingle = " }";
@@ -3370,8 +3422,8 @@ class lessc_formatter_classic {
 		return str_repeat($this->indentChar, max($this->indentLevel + $n, 0));
 	}
 
-	public function property($name, $value) {
-		return $name . $this->assignSeparator . $value . ";";
+	public function property($name, $value, $comment = false) {
+		return $name . $this->assignSeparator . $value . ";" . ($comment?$comment:"");
 	}
 
 	protected function isEmpty($block) {
@@ -3397,7 +3449,9 @@ class lessc_formatter_classic {
 			is_null($block->type) && count($block->lines) == 1;
 
 		if (!empty($block->selectors)) {
-			echo "/* line ".$block->debug['line'] .", ".$block->debug['file'] ." */ ". $this->break;
+			if ($this->debug && !empty($block->debug)){
+				echo "/* line ".$block->debug['line'] .", ".$block->debug['file'] ." */ ". $this->break;
+			}
 			$this->indentLevel++;
 
 			if ($this->breakSelectors) {
@@ -3443,6 +3497,7 @@ class lessc_formatter_classic {
 				echo $pre . $this->close . $this->break;
 			}
 
+			echo $this->breakAfterBlock;
 			$this->indentLevel--;
 		}
 	}
@@ -3454,6 +3509,7 @@ class lessc_formatter_compressed extends lessc_formatter_classic {
 	public $selectorSeparator = ",";
 	public $assignSeparator = ":";
 	public $break = "";
+	public $breakAfterBlock = "";
 	public $compressColors = true;
 
 	public function indentStr($n = 0) {
@@ -3464,8 +3520,21 @@ class lessc_formatter_compressed extends lessc_formatter_classic {
 class lessc_formatter_lessjs extends lessc_formatter_classic {
 	public $disableSingle = true;
 	public $breakSelectors = true;
-	public $assignSeparator = ": ";
+	public $assignSeparator = ":";
 	public $selectorSeparator = ",";
 }
 
+class lessc_formatter_debug extends lessc_formatter_classic {
+	public $disableSingle = true;
+	public $debug = true;
+	public $break = "\n";
+	public $breakAfterBlock = "\n\n";
+}
+
+class lessc_formatter_debugCompress extends lessc_formatter_classic {
+	public $disableSingle = false;
+	public $debug = true;
+	public $break = "";
+	public $breakAfterBlock = "\n";
+}
 
