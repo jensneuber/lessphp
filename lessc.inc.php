@@ -53,9 +53,9 @@ class lessc {
 	public $importDisabled = false;
 	public $importDir = '';
 
-	public $currentParsedFile;
-	public $currentLine;
-	public $importLevel = 0;
+	// public $currentParsedFile;
+	// public $currentLine;
+	// public $importLevel = 0;
 
 	protected $numberPrecision = null;
 
@@ -290,6 +290,7 @@ class lessc {
 	protected function compileProps($block, $out) {
 		foreach ($this->sortProps($block->props) as $prop) {
 			$this->compileProp($prop, $block, $out);
+			#84ff82
 		}
 	}
 
@@ -616,8 +617,6 @@ class lessc {
 
 	// compile a prop and update $lines or $blocks appropriately
 	protected function compileProp($prop, $block, $out) {
-
-		//print_r($prop);
 
 		// set error position context
 		$this->sourceLoc = isset($prop[-1]) ? $prop[-1] : -1;
@@ -1866,7 +1865,7 @@ class lessc {
 	protected function addParsedFile($file, $isRoot = false) {
 		$this->allParsedFiles[$file] = array(
 			'filetime' => filemtime($file),
-			'importLevel' => $this->importLevel,
+			//'importLevel' => $this->importLevel,
 			'position' => 0
 		);
 	}
@@ -3450,7 +3449,10 @@ class lessc_formatter_classic {
 
 		if (!empty($block->selectors)) {
 			if ($this->debug && !empty($block->debug)){
-				echo "/* line ".$block->debug['line'] .", ".$block->debug['file'] ." */ ". $this->break;
+				//echo "/* line ".$block->debug['line'] .", ".$block->debug['file'] ." */ ". $this->break;
+				$file = preg_replace("/([\/:])/i", '\\\$0', "http://dynamo.web1.local/includes/styles/".$block->debug['file']);
+				echo "@media -sass-debug-info{filename{font-family:".$file."}line{font-family:\\00003".$block->debug['line'] ."}}\n";
+				//echo '@media -sass-debug-info{filename{font-family:"http://dynamo.web1.local/includes/styles/' . $block->debug['file'] . '"}line{font-family:\\00003".$block->debug['line'] ."}}\n';
 			}
 			$this->indentLevel++;
 
