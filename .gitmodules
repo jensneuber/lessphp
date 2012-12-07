@@ -1,0 +1,3 @@
+[submodule "submodules/lessphp"]
+	path = submodules/lessphp
+	url = git@gitserver.local:lessphp.git
